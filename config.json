@@ -1,0 +1,34 @@
+{
+  "demos": [
+    {
+      "title": "Popular actors",
+      "body": "Explore the profile pictures of popular actors on TMDb. See who's smiling or frowning, who is African or Chinese, and who has the most facial hair.",
+      "folder": "actors",
+      "source": "https://www.themoviedb.org/"
+    },
+    {
+      "title": "AirBnB pictures",
+      "body": "Examine a set of AirBnB photos of US properties. Separate the interiors from exteriors, pools from balconies, and bedrooms from kitchens.",
+      "folder": "airbnb",
+      "source": "https://www.kaggle.com/datasets/eren2222/airbnb-properties-image"
+    },
+    {
+      "title": "Car photos",
+      "body": "Dive into car images. Find different views of the same model. Separate vintage from sports cars, and SUVs from sedans.",
+      "folder": "cars",
+      "source": "https://www.kaggle.com/datasets/kshitij192/cars-image-dataset"
+    },
+    {
+      "title": "Object detection",
+      "body": "Explore popular retail products and photos of warehouse operations. See how we can differentiate one from the other.",
+      "folder": "warehouse",
+      "source": "https://www.kaggle.com/datasets/aayushkumarthakur/warehouse-image-dataset"
+    },
+    {
+      "title": "Indian Actors",
+      "body": "The explorer is designed to celebrate the diversity and talent of Indian cinema, making it a go-to resource for fans and researchers alike.",
+      "folder": "indian-actors",
+      "source": ""
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+validate:
+  image: gramener/builderrors
+  script: builderrors
+
+deploy:
+  stage: deploy
+  script: deploy
+  variables:
+    SERVER: gramener.com
+    URL: imageexplore
+    VERSION: static
+    # SETUP: npm install --production
+    CORS: enabled
+  environment:
+    name: production
+    url: https://gramener.com/imageexplore/
