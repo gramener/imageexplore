@@ -229,6 +229,7 @@ function drawResults({ model, similarity, docs }) {
       class="img-fluid d-block mx-auto"
       viewBox="0 0 1200 800"
       preserveAspectRatio="xMidYMid"
+      fill="currentColor"
     >
       <text x="25%" y="50" class="h3" text-anchor="middle">Outliers</text>
       <text x="50%" y="50" class="h3" text-anchor="middle" id="similarity-value"></text>
