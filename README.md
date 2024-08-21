@@ -16,3 +16,7 @@ Then run any HTTP server and open `index.html`.
 4. OPTIONAL: Write `newdemo/setup.sh` to for any image extraction or processing
 5. Add the images <https://gramener.com/imageexplore/>, download the JSON and save as `newdemo/similarity.json`
 6. Commit and push the changes
+
+## How this app was built
+
+[![Explainer video](https://img.youtube.com/vi/OD_BLwNR1nU/0.jpg)](https://youtu.be/OD_BLwNR1nU)
