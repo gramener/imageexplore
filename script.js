@@ -44,8 +44,7 @@ fetch("config.json")
             <div class="card-body">
               <h5 class="card-title">Create your own</h5>
               <p class="card-text">
-                Upload your own images and a set of topics. See how your images are connected to the topics and with
-                each other.
+                Upload your own images and a set of topics. See how your images are connected to the topics and with each other.
               </p>
             </div>
           </a>
@@ -167,8 +166,15 @@ $experiment.addEventListener("submit", async (e) => {
   // Fetch similarity
   const similarity = await fetch("https://llmfoundry.straive.com/similarity", {
     method: "POST",
-    body: JSON.stringify({ model: "multimodalembedding@001", docs, precision: 5 }),
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${formData.get("token")}` },
+    body: JSON.stringify({
+      model: "multimodalembedding@001",
+      docs,
+      precision: 5,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${formData.get("token")}`,
+    },
   }).then((res) => res.json());
   if (interval) clearInterval(interval);
   $progress.classList.add("d-none");
@@ -179,7 +185,11 @@ $experiment.addEventListener("submit", async (e) => {
 
 function drawResults({ model, similarity, docs }) {
   // Render a button that downloads `similarity` as a JSON file `similarity.json`
-  const json = JSON.stringify({ model, docs: docs.map(({ type, name }) => ({ type, name })), similarity });
+  const json = JSON.stringify({
+    model,
+    docs: docs.map(({ type, name }) => ({ type, name })),
+    similarity,
+  });
 
   // NOTE: lit-html and D3 conflict. Don't use lit-html here
   $result.innerHTML = /* html */ `
@@ -217,6 +227,7 @@ function drawResults({ model, similarity, docs }) {
       <p>We took each image and evaluated how close they are to <strong>every</strong> other image.</p>
       <p><strong>Move the slider below</strong> to modify the minimum similarity cutoff and spot the outliers.</p>
       <p>
+        <input id="search" type="search" class="form-control d-inline-block w-auto me-2" placeholder="Search images">
         <button class="btn btn-outline-primary set-cutoff" data-cutoff="0.70" id="min-cutoff">Top outliers</button>
         <button class="btn btn-outline-primary set-cutoff" data-cutoff="0.96" id="max-cutoff">Most similar</button>
       </p>
@@ -311,7 +322,11 @@ function drawResults({ model, similarity, docs }) {
   const links = images.flatMap((source) =>
     images
       .filter((target) => source !== target)
-      .map((target) => ({ source, target, similarity: similarity[source.index][target.index] })),
+      .map((target) => ({
+        source,
+        target,
+        similarity: similarity[source.index][target.index],
+      })),
   );
 
   // Set the data-cutoff of #min-cutoff and #max-cutoff to 90% and 10% of the range
@@ -319,23 +334,36 @@ function drawResults({ model, similarity, docs }) {
   $base.select("#min-cutoff").attr("data-cutoff", minSimilarity * 0.5 + maxSimilarity * 0.5);
   $base.select("#max-cutoff").attr("data-cutoff", minSimilarity * 0.1 + maxSimilarity * 0.9);
 
-  function drawNetwork({ cutoff = 0.8 }) {
-    const linksFiltered = links.filter((d) => d.similarity > cutoff);
+  let graph;
+
+  function drawNetwork() {
+    const cutoff = $base.select("#cutoff").property("value");
+    const searchTerm = $base.select("#search").property("value").trim().replace(/\s+/g, ".*");
+    const searchRegex = new RegExp(searchTerm, "i");
+
+    // Filter nodes based on searchTerm
+    const matchingNodes = new Set(nodes.filter((d) => searchRegex.test(d.name)));
+    const linksFiltered = links.filter((d) => d.similarity > cutoff && (matchingNodes.has(d.source) || matchingNodes.has(d.target)));
+
+    // Update linkCount for filtered nodes
     nodes.forEach((d) => (d.linkCount = 0));
     linksFiltered.forEach((d) => {
       if (d.source.name != d.target.name) {
         d.source.linkCount++;
         d.target.linkCount++;
+        matchingNodes.add(d.source);
+        matchingNodes.add(d.target);
       }
     });
-    const nConnectedNodes = nodes.filter((d) => d.linkCount > 0).length;
-    const graph = network("#network", {
-      nodes,
+
+    const filteredNodes = Array.from(matchingNodes);
+    const nConnectedNodes = filteredNodes.filter((d) => d.linkCount > 0).length;
+
+    graph = network("#network", {
+      nodes: filteredNodes,
       links: linksFiltered,
       forces: {
-        // if node is connected, move it to the right, else move it to the left
         x: ({ width }) => d3.forceX((d) => (d.linkCount ? (width * 3) / 4 : width / 4)),
-        // Leave a gap of 30px for unconnected nodes. Space out connected nodes more if there are few of them
         collide: () => d3.forceCollide().radius((d) => (d.linkCount ? 25 + (100 - nConnectedNodes) / 5 : 30)),
       },
       nodeTag: "image",
@@ -353,11 +381,11 @@ function drawResults({ model, similarity, docs }) {
     $base.select("#similarity-value").text(pc(cutoff));
   }
 
+  $base.select("#search").on("input", drawNetwork);
+
   $base
     .select("#cutoff")
-    .on("input", function () {
-      drawNetwork({ cutoff: this.value });
-    })
+    .on("input", drawNetwork)
     .attr("max", maxSimilarity.toFixed(2))
     .attr("min", minSimilarity.toFixed(2))
     .property("value", minSimilarity * 0.2 + maxSimilarity * 0.8)
