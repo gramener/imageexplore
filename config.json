@@ -19,6 +19,12 @@
       "source": "https://www.kaggle.com/datasets/kshitij192/cars-image-dataset"
     },
     {
+      "title": "Hip replacement",
+      "body": "Explore images of hip replacement surgeries. See how we can differentiate one from the other.",
+      "folder": "hipreplacement",
+      "source": "https://gramener.com/docsearch/hipreplacement/"
+    },
+    {
       "title": "Object detection",
       "body": "Explore popular retail products and photos of warehouse operations. See how we can differentiate one from the other.",
       "folder": "warehouse",
