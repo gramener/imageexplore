@@ -1,0 +1,9 @@
+deploy_straivedemo:
+  stage: deploy
+  tags:
+    - straivedemo3
+  image: instrumentisto/rsync-ssh
+  script:
+    - chmod og= $ID_RSA
+    - cp $ENV .env
+    - rsync -avz -e "ssh -i $ID_RSA -o StrictHostKeyChecking=no" --no-perms --no-times ./ $SERVER_USER@$SERVER_IP:/var/www/html/imageexplore
