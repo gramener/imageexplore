@@ -58,6 +58,21 @@
     <div id="experiment" class="collapse"></div>
     <div id="progress" class="my-5"></div>
     <div id="result" class="my-5"></div>
+    <form id="search-form" class="my-5 d-none">
+      <h2 class="my-5 text-center display-6">Discover images by concept</h2>
+      <div class="mx-auto narrative">
+        <p class="text-center">Search for any term, object, or concept. We'll look at each image for the phrase and find the best matches.</p>
+      </div>
+      <div class="row align-items-center justify-content-center">
+        <div class="col-auto">
+          <input id="phrase" type="search" class="form-control" placeholder="Search for a phrase">
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary">Find similar</button>
+        </div>
+      </div>
+      <div id="search-matches"></div>
+    </div>
 
     <footer class="my-5 vh-100 d-flex align-items-center justify-content-center">
       <h1 class="display-4">Designed by <a href="https://gramener.com/" class="text-reset link-offset-3 link-underline link-underline-opacity-25">Gramener</a></h1>

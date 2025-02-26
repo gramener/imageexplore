@@ -41,6 +41,12 @@
       "body": "This explores 100 most popular celebrities associated with Korea from the TMDb. See who's happy, sad, casual, formal, and more.",
       "folder": "kcelebs",
       "source": "https://huggingface.co/datasets/ashraq/tmdb-celeb-10k"
+    },
+    {
+      "title": "Shell photos",
+      "body": "A collection of images from Shell's marketing campaigns, website, and Facebook pages.",
+      "folder": "shell",
+      "source": ""
     }
   ]
 }

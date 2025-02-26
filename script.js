@@ -7,11 +7,17 @@ const $demos = document.querySelector("#demos");
 const $experiment = document.querySelector("#experiment");
 const $progress = document.querySelector("#progress");
 const $result = document.querySelector("#result");
+const $searchForm = document.querySelector("#search-form");
+const $searchMatches = document.querySelector("#search-matches");
 const loading = html`<div class="text-center mx-auto my-5">
   <div class="spinner-border" role="status"></div>
 </div>`;
 
 const pc = d3.format(".1%");
+
+// Docs and Embeddings (if present) for the current demo
+let demoDocs;
+let demoEmbeddings;
 
 // Render list of demos as a card
 render(loading, $demos);
@@ -30,7 +36,7 @@ fetch("config.json")
                 </div>
               </a>
             </div>
-          `,
+          `
         ),
         html`<div class="col py-3">
           <a
@@ -44,14 +50,15 @@ fetch("config.json")
             <div class="card-body">
               <h5 class="card-title">Create your own</h5>
               <p class="card-text">
-                Upload your own images and a set of topics. See how your images are connected to the topics and with each other.
+                Upload your own images and a set of topics. See how your images are connected to the topics and with
+                each other.
               </p>
             </div>
           </a>
         </div>`,
       ],
-      $demos,
-    ),
+      $demos
+    )
   );
 
 // If user is logged into LLM Foundry, let them upload images and topics. Else show a link to log in
@@ -74,7 +81,7 @@ Click to change login"
               </a>
             </div>
             <form class="row was-validated" tabindex="0">
-              <input type="hidden" name="token" value="${token}:imageexplore" />
+              <input type="hidden" name="token" id="token" value="${token}:imageexplore" />
               <div class="col-sm">
                 <div class="mb-3">
                   <label for="docs" class="form-label">Pick up to 100 JPG/PNG files (max 50KB each)</label>
@@ -102,7 +109,7 @@ Click to change login"
         : html`<p class="text-center">
             <a class="btn btn-primary" href="${url}">Log in to try your own images</a>
           </p>`,
-      $experiment,
+      $experiment
     );
   });
 
@@ -112,12 +119,21 @@ $demos.addEventListener("click", (e) => {
     e.preventDefault();
     render(loading, $result);
     $result.scrollIntoView({ behavior: "smooth" });
+    $searchForm.classList.add("d-none");
     const folder = $demo.href;
     fetch(`${folder}/similarity.json`)
       .then((res) => res.json())
       .then((similarity) => {
         similarity.docs.forEach((doc) => (doc.value = `${folder}/${doc.name}`));
         drawResults(similarity);
+      });
+    fetch(`${folder}/embeddings.json`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((embeddings) => {
+        if (embeddings) {
+          $searchForm.classList.remove("d-none");
+          demoEmbeddings = embeddings.embeddings;
+        }
       });
   }
 });
@@ -155,7 +171,7 @@ $experiment.addEventListener("submit", async (e) => {
       >
         <div class="progress-bar" style="width: ${progress * 100}%">${pc(progress)}</div>
       </div> `,
-      $progress,
+      $progress
     );
   let interval = setInterval(() => {
     progress += seconds / expectedDuration;
@@ -184,6 +200,7 @@ $experiment.addEventListener("submit", async (e) => {
 });
 
 function drawResults({ model, similarity, docs }) {
+  demoDocs = docs;
   // Render a button that downloads `similarity` as a JSON file `similarity.json`
   const json = JSON.stringify({
     model,
@@ -210,7 +227,9 @@ function drawResults({ model, similarity, docs }) {
       <div class="col-auto">
         <label class="form-label fw-bold">Download results</label>
         <div>
-          <a href="data:application/json;base64,${btoa(json)}" download="similarity.json" class="btn btn-primary">JSON</a>
+          <a href="data:application/json;base64,${btoa(
+            json
+          )}" download="similarity.json" class="btn btn-primary">JSON</a>
         </div>
       </div>
     </form>
@@ -227,7 +246,7 @@ function drawResults({ model, similarity, docs }) {
       <p>We took each image and evaluated how close they are to <strong>every</strong> other image.</p>
       <p><strong>Move the slider below</strong> to modify the minimum similarity cutoff and spot the outliers.</p>
       <p>
-        <input id="search" type="search" class="form-control d-inline-block w-auto me-2" placeholder="Search images">
+        <input id="search" type="search" class="form-control d-inline-block w-auto me-2" placeholder="Filter images">
         <button class="btn btn-outline-primary set-cutoff" data-cutoff="0.70" id="min-cutoff">Top outliers</button>
         <button class="btn btn-outline-primary set-cutoff" data-cutoff="0.96" id="max-cutoff">Most similar</button>
       </p>
@@ -245,7 +264,8 @@ function drawResults({ model, similarity, docs }) {
       <text x="25%" y="50" class="h3" text-anchor="middle">Outliers</text>
       <text x="50%" y="50" class="h3" text-anchor="middle" id="similarity-value"></text>
       <text x="75%" y="50" class="h3" text-anchor="middle">Similar images</text>
-    </svg>`;
+    </svg>
+    `;
 
   docs.forEach((doc, i) => (doc.index = i));
   const images = docs.filter((d) => d.type == "image");
@@ -326,7 +346,7 @@ function drawResults({ model, similarity, docs }) {
         source,
         target,
         similarity: similarity[source.index][target.index],
-      })),
+      }))
   );
 
   // Set the data-cutoff of #min-cutoff and #max-cutoff to 90% and 10% of the range
@@ -343,7 +363,9 @@ function drawResults({ model, similarity, docs }) {
 
     // Filter nodes based on searchTerm
     const matchingNodes = new Set(nodes.filter((d) => searchRegex.test(d.name)));
-    const linksFiltered = links.filter((d) => d.similarity > cutoff && (matchingNodes.has(d.source) || matchingNodes.has(d.target)));
+    const linksFiltered = links.filter(
+      (d) => d.similarity > cutoff && (matchingNodes.has(d.source) || matchingNodes.has(d.target))
+    );
 
     // Update linkCount for filtered nodes
     nodes.forEach((d) => (d.linkCount = 0));
@@ -395,6 +417,59 @@ function drawResults({ model, similarity, docs }) {
     $base.select("#cutoff").property("value", this.dataset.cutoff).dispatch("input");
   });
 }
+
+// ----------------------------------------------------------------------------------------------
+// Search images by similarity
+$searchForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  render(loading, $searchMatches);
+
+  const token = document.querySelector("#token").value;
+  const phrase = e.target.querySelector("#phrase").value;
+  const embedding = await fetch(
+    "https://llmfoundry.straive.com/vertexai/google/models/multimodalembedding@001:predict",
+    {
+      method: "POST",
+      body: JSON.stringify({ instances: [{ text: phrase }] }),
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    }
+  ).then((res) => res.json());
+
+  // Calculate the best images
+  const queryEmbedding = embedding.predictions[0].textEmbedding;
+
+  // Calculate dot product between query and each image embedding
+  const similarities = demoEmbeddings.map((e) => e.reduce((sum, val, i) => sum + val * queryEmbedding[i], 0));
+
+  // Create array of {doc, similarity} pairs, sort by similarity, and filter for images
+  const closestImages = demoDocs
+    .map((doc, i) => ({ doc, similarity: similarities[i] }))
+    .filter((item) => item.doc.type === "image")
+    .sort((a, b) => b.similarity - a.similarity);
+
+  // Display results
+  render(
+    html`
+      <h3 class="mt-4">Closest matches for "${phrase}"</h3>
+      <div class="row row-cols-2 row-cols-md-4 g-4">
+        ${closestImages.slice(0, 8).map(
+          ({ doc, similarity }) => html`
+            <div class="col">
+              <div class="card h-100">
+                <img src="${doc.value}" class="card-img-top" alt="${doc.name}" />
+                <div class="card-body">
+                  <h5 class="card-title">${doc.name}</h5>
+                  <p class="card-text">Similarity: ${d3.format(".1%")(similarity)}</p>
+                </div>
+              </div>
+            </div>
+          `
+        )}
+      </div>
+    `,
+    $searchMatches
+  );
+});
 
 /**
  * Read an image file and return a promise that resolves to a base64 image
